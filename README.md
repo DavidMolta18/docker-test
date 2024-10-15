@@ -43,6 +43,8 @@ Para autenticarse con Docker Hub sin exponer las credenciales, utilizamos secret
 
 Estos secretos se usan en el archivo de configuración de GitHub Actions para autenticarnos en Docker y subir la imagen automáticamente.
 
+![](docs/dck-secrets.png)
+
 ### 4. 🛠️ **Definición del Pipeline en GitHub Actions**
 
 Configuramos GitHub Actions para automatizar la construcción y despliegue de la imagen en Docker Hub. Usamos los secretos previamente configurados para autenticar nuestra cuenta en Docker y así poder subir las imágenes sin exponer las credenciales.
@@ -84,6 +86,12 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/react-app:latest
 ```
 
+Luego de hacer push pudimos ver el proceso de creación del workflow, y confirmar que todo funcionaba correctamente.
+![](docs/dck-workflows.png)
+
+Luego revisamos en dockerhub si la imagen estaba disponible.
+![](docs/dck-dockerh.png)
+
 ### 5. 🌐 **Verificación del Despliegue Local**
 
 Luego de crear la imagen y lanzarla, verificamos que la aplicación React esté correctamente desplegada en el puerto `3000`. Para levantar la aplicación, usamos:
@@ -94,6 +102,11 @@ docker-compose up
 
 Y pudimos acceder a la aplicación en el navegador a través de `http://localhost:3000` 🎉.
 
+![](docs/dck-log.png)
+
+![](docs/dck-inicio.png)
+
+![](docs/dck-people.png)
 ---
 
 ## 💡 **Conclusión**
