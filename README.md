@@ -1,71 +1,101 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-hi
+# 🚀 Despliegue Automático con Docker y GitHub Actions
 
-## Available Scripts
+Este proyecto tiene como objetivo desplegar una aplicación React utilizando Docker y GitHub Actions, integrando un flujo de CI/CD completo para facilitar el despliegue continuo.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 📑 **Pasos Realizados en el Proyecto**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. 🔧 **Configuración del `Dockerfile`**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Creamos un `Dockerfile` que describe cómo se debe construir la imagen de Docker para nuestra aplicación React. Aquí indicamos que la imagen debe basarse en Node.js y luego copiamos el código de la aplicación al contenedor.
 
-### `npm test`
+```Dockerfile
+# Utilizamos la imagen oficial de Node.js
+FROM node:14
+...
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 2. ⚙️ **Configuración del `docker-compose.yml`**
 
-### `npm run build`
+El archivo `docker-compose.yml` nos ayuda a orquestar el contenedor. Lo hemos configurado para exponer la aplicación en el puerto `3000`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```yaml
+version: "3.8"
+services:
+  web-app:
+    build: .
+    ports:
+      - "3000:3000"
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 3. 🔐 **Uso de Secretos en GitHub Actions**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Para autenticarse con Docker Hub sin exponer las credenciales, utilizamos secretos en GitHub Actions. Configuramos los secretos `DOCKER_USERNAME` y `DOCKER_PASSWORD` en el repositorio.
 
-### `npm run eject`
+#### 🔑 **¿Cómo configuramos los secretos?**
+1. Ve al repositorio en GitHub.
+2. Dirígete a **Settings** → **Secrets and variables** → **Actions**.
+3. Crea dos nuevos secretos:
+   - `DOCKER_USERNAME`: tu nombre de usuario de Docker Hub.
+   - `DOCKER_PASSWORD`: la contraseña asociada a tu cuenta de Docker Hub.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Estos secretos se usan en el archivo de configuración de GitHub Actions para autenticarnos en Docker y subir la imagen automáticamente.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 4. 🛠️ **Definición del Pipeline en GitHub Actions**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Configuramos GitHub Actions para automatizar la construcción y despliegue de la imagen en Docker Hub. Usamos los secretos previamente configurados para autenticar nuestra cuenta en Docker y así poder subir las imágenes sin exponer las credenciales.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```yaml
+name: Build and Deploy React App to Docker Hub
 
-## Learn More
+on:
+  push:
+    branches:
+      - main
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    steps:
+      # Checkout repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-### Code Splitting
+      # Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+      # Iniciar sesión en DockerHub
+      - name: Authenticate with Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-### Analyzing the Bundle Size
+      # Build y push de la imagen Docker a DockerHub
+      - name: Push Docker Image to Docker Hub
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/react-app:latest
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 5. 🌐 **Verificación del Despliegue Local**
 
-### Making a Progressive Web App
+Luego de crear la imagen y lanzarla, verificamos que la aplicación React esté correctamente desplegada en el puerto `3000`. Para levantar la aplicación, usamos:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+docker-compose up
+```
 
-### Advanced Configuration
+Y pudimos acceder a la aplicación en el navegador a través de `http://localhost:3000` 🎉.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## 💡 **Conclusión**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Con estos pasos, logramos configurar un flujo de trabajo automatizado para construir, empaquetar y desplegar nuestra aplicación React con Docker y GitHub Actions. 🚀 Todo el proceso está ahora automatizado, permitiendo que los cambios en el código se reflejen rápidamente en el despliegue. Además, usamos secretos para mantener nuestras credenciales seguras durante el proceso de CI/CD. 🔐
